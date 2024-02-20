@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/models/patient.dart';
+import 'package:flutter_app/app/networking/api_service.dart';
 import 'package:nylo_framework/nylo_framework.dart';
 
 class MedicalRecordPage extends StatefulWidget {
   final int patientId;
-  final List<MedicalRecords> medicalRecords;
-  MedicalRecordPage(
-      {super.key, required this.patientId, required this.medicalRecords});
+  MedicalRecordPage({super.key, required this.patientId});
 
   @override
   _MedicalRecordPageState createState() => _MedicalRecordPageState();
 }
 
 class _MedicalRecordPageState extends NyState<MedicalRecordPage> {
+  ApiService _apiService = ApiService();
+
+  // final List<MedicalRecords> medicalRecords;
+  Patient _patient = Patient();
+  init() async {
+    Patient? patient = await _apiService.getPatientById(id: widget.patientId);
+    if (patient != null) {
+      setState(() {
+        _patient = patient;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,12 +32,12 @@ class _MedicalRecordPageState extends NyState<MedicalRecordPage> {
         title: Text('Phiếu khám bệnh của ${widget.patientId}'),
       ),
       body: Center(
-        child: widget.medicalRecords == null || widget.medicalRecords.isEmpty
+        child: _patient.medicalRecords == null
             ? Text('Không có phiếu khám bệnh')
             : ListView.builder(
-                itemCount: widget.medicalRecords.length,
+                itemCount: _patient.medicalRecords!.length,
                 itemBuilder: (context, index) {
-                  final record = widget.medicalRecords[index];
+                  final record = _patient.medicalRecords![index];
                   return Column(
                     children: [
                       Text('chiều cao: ${record.chieucao}'),

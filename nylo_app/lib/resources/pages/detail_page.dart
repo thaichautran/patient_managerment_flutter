@@ -29,9 +29,8 @@ class DetailPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => MedicalRecordPage(
-                        patientId: patient.id!,
-                        medicalRecords: patient.medicalRecords ?? []),
+                    builder: (context) =>
+                        MedicalRecordPage(patientId: patient.id!),
                   ),
                 );
               },

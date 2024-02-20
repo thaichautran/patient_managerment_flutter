@@ -1,3 +1,5 @@
+import 'package:flutter_app/app/networking/api_service.dart';
+import 'package:flutter_app/resources/pages/list_patient.dart';
 import 'package:flutter_app/resources/pages/login_page.dart';
 import 'package:nylo_framework/nylo_framework.dart';
 import 'package:nylo_framework/theme/helper/ny_theme.dart';
@@ -38,6 +40,22 @@ class _HomePageState extends NyState<HomePage> {
   // }
 
   /// The [view] method should display your page.
+  ApiService _apiService = ApiService();
+  @override
+  init() async {
+    final status = await _apiService.getUser();
+    String userToken = await NyStorage.read<String>("userToken");
+    print(userToken);
+
+    if (status == 200) {
+      Navigator.push(context,
+          new MaterialPageRoute(builder: (context) => new ListPatientPage()));
+    } else {
+      Navigator.push(context,
+          new MaterialPageRoute(builder: (context) => new LoginPage()));
+    }
+  }
+
   @override
   Widget view(BuildContext context) {
     return Scaffold(

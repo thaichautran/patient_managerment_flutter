@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/models/user.dart';
 import 'package:flutter_app/app/networking/api_service.dart';
 import 'package:flutter_app/config/storage_keys.dart';
 import 'package:flutter_app/resources/pages/list_patient.dart';
@@ -44,6 +45,7 @@ class LoginPage extends StatelessWidget {
               onPressed: () async {
                 String username = usernameController.text;
                 String password = passwordController.text;
+
                 String? token = await api<ApiService>(
                     (service) =>
                         service.login(username: username, password: password),

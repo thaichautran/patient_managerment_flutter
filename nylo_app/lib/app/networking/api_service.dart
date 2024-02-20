@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/models/patient.dart';
+import 'package:flutter_app/app/models/user.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '/config/storage_keys.dart';
 import '/config/decoders.dart';
@@ -50,10 +51,34 @@ class ApiService extends NyApiService {
     );
   }
 
-  Future logout() async {
+  Future getUser() async {
     return await network(
-      request: (request) {
-        String userToken = Backpack.instance.read('userToken');
+      request: (request) async {
+        String userToken = await NyStorage.read<String>("userToken");
+        request.options.headers = {'Authorization': "Bearer " + userToken};
+        return request.get("/Auth/user");
+      },
+      handleSuccess: (Response response) {
+        print(response.statusCode);
+        return response.statusCode;
+      },
+    );
+  }
+
+  // Future<User?> register(
+  //     {required String username, required String password}) async {
+  //   User user = User(username, password);
+
+  //   await NyStorage.store('user', user);
+  //   Backpack.instance.set('user', user);
+  //   await Auth.set(user);
+  //   return user;
+  // }
+
+  Future<int> logout() async {
+    return await network(
+      request: (request) async {
+        String userToken = await NyStorage.read<String>("userToken");
         request.options.headers = {'Authorization': "Bearer " + userToken};
         return request.get("/Auth/logout");
       },
@@ -65,8 +90,8 @@ class ApiService extends NyApiService {
 
   Future<List<Patient>?> fetchPatient(
       String date, int page, int pageSize) async {
-    return await network<List<Patient>>(request: (request) {
-      String userToken = Backpack.instance.read('userToken');
+    return await network<List<Patient>>(request: (request) async {
+      String userToken = await NyStorage.read<String>("userToken");
 
       // Set auth header
       request.options.headers = {'Authorization': "Bearer " + userToken};
@@ -79,6 +104,19 @@ class ApiService extends NyApiService {
       return response.data['data']
           .map<Patient>((json) => Patient.fromJson(json))
           .toList();
+    });
+  }
+
+  Future<Patient?> getPatientById({required int id}) async {
+    return await network(request: (request) async {
+      String userToken = await NyStorage.read<String>("userToken");
+      request.options.headers = {'Authorization': "Bearer " + userToken};
+
+      return request.get(
+        "/Patient/${id}",
+      );
+    }, handleSuccess: (Response response) {
+      return Patient.fromJson(response.data['data']);
     });
   }
 

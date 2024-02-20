@@ -1,15 +1,15 @@
 import 'package:nylo_framework/nylo_framework.dart';
 
 class User extends Model {
-  String? name;
-  String? email;
+  String? username;
+  String? password;
 
-  User();
+  User(String username, String password);
 
   User.fromJson(dynamic data) {
-    name = data['name'];
-    email = data['email'];
+    username = data['username'];
+    password = data['password'];
   }
 
-  toJson() => {"name": name, "email": email};
+  toJson() => {"username": username, "password": password};
 }
