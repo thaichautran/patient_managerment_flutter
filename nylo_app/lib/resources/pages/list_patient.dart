@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/database/database_service.dart';
 import 'package:flutter_app/app/models/patient.dart';
 import 'package:flutter_app/app/models/user.dart';
 import 'package:flutter_app/app/networking/api_service.dart';
@@ -16,7 +19,7 @@ class ListPatientPage extends StatefulWidget {
 
 class _ListPatientPageState extends NyState<ListPatientPage> {
   ApiService _apiService = ApiService();
-  List<Patient> _listPatient = [];
+  List<Patient>? _listPatient = [];
   @override
   init() async {
     DateTime now = DateTime.now();
@@ -26,9 +29,11 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
     if (patients != null) {
       setState(() {
         _listPatient = patients;
+        DatabaseHelper.addPatients(_listPatient!);
       });
+    } else {
+      _listPatient = await DatabaseHelper.getAllPatient();
     }
-    print(_listPatient);
   }
 
   @override
@@ -56,14 +61,14 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
           ),
         ],
       ),
-      body: _listPatient.isEmpty
+      body: _listPatient!.isEmpty
           ? Center(
               child: Text("Không có bệnh nhân nào!"),
             )
           : ListView.builder(
-              itemCount: _listPatient.length,
+              itemCount: _listPatient?.length,
               itemBuilder: (context, index) {
-                final patient = _listPatient[index];
+                final patient = _listPatient![index];
                 return ListTile(
                   title: Text(patient.hovaten ?? ""),
                   subtitle: Text(patient.namsinh.toString()),
@@ -86,7 +91,9 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AddPatientForm(),
+                  builder: (context) => AddPatientForm(
+                    address: "HN",
+                  ),
                 ),
               );
             },

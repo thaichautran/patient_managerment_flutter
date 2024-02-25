@@ -43,16 +43,21 @@ class _HomePageState extends NyState<HomePage> {
   ApiService _apiService = ApiService();
   @override
   init() async {
-    final status = await _apiService.getUser();
-    String userToken = await NyStorage.read<String>("userToken");
-    print(userToken);
-
-    if (status == 200) {
-      Navigator.push(context,
-          new MaterialPageRoute(builder: (context) => new ListPatientPage()));
-    } else {
+    String? userToken = await NyStorage.read<String>("userToken");
+    if (userToken == null) {
       Navigator.push(context,
           new MaterialPageRoute(builder: (context) => new LoginPage()));
+    } else {
+      final status = await _apiService.getUser();
+      if (status == 200) {
+        Navigator.push(context,
+            new MaterialPageRoute(builder: (context) => new ListPatientPage()));
+      } else {
+        // Navigator.push(context,
+        //     new MaterialPageRoute(builder: (context) => new LoginPage()));
+        Navigator.push(context,
+            new MaterialPageRoute(builder: (context) => new ListPatientPage()));
+      }
     }
   }
 

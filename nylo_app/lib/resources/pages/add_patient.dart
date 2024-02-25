@@ -1,10 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/models/patient.dart';
 import 'package:flutter_app/app/networking/api_service.dart';
+import 'package:flutter_app/resources/pages/get_location.dart';
 import 'package:flutter_app/resources/pages/list_patient.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:nylo_framework/nylo_framework.dart';
 
 class AddPatientForm extends StatefulWidget {
+  final String address;
+
+  const AddPatientForm({super.key, required this.address});
   @override
   _AddPatientFormState createState() => _AddPatientFormState();
 }
@@ -40,6 +48,8 @@ class _AddPatientFormState extends State<AddPatientForm> {
 
   MedicalRecords? _medicalRecord;
   List<String> _hinhAnh = [];
+  final ImagePicker _imagePicker = ImagePicker();
+  List<File> _files = [];
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +114,20 @@ class _AddPatientFormState extends State<AddPatientForm> {
                 },
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Địa chỉ'),
+                decoration: InputDecoration(
+                  labelText: 'Địa chỉ',
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.map),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GetLocationPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập địa chỉ';
@@ -112,8 +135,9 @@ class _AddPatientFormState extends State<AddPatientForm> {
                   return null;
                 },
                 onSaved: (value) {
-                  _diaChi = value!;
+                  value != null ? _diaChi = value : _diaChi = widget.address;
                 },
+                initialValue: widget.address,
               ),
               TextFormField(
                 decoration: InputDecoration(labelText: 'Giới tính'),
@@ -124,7 +148,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
                   return null;
                 },
                 onSaved: (value) {
-                  _diaChi = value!;
+                  _gioiTinh = value!;
                 },
               ),
               TextFormField(
@@ -139,8 +163,78 @@ class _AddPatientFormState extends State<AddPatientForm> {
                   _ngheNghiep = value!;
                 },
               ),
+              Builder(
+                builder: (context) {
+                  return Wrap(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(top: 10.0),
+                        child: Wrap(
+                          runSpacing: 10.0,
+                          spacing: -15,
+                          children: _files.map((e) {
+                            return fileRow(e, () {
+                              setState(() {
+                                _files.remove(e);
+                              });
+                            });
+                          }).toList(),
+                        ),
+                      )
+                    ],
+                  );
+                },
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(top: 10.0),
+                    child: FloatingActionButton(
+                      onPressed: () async {
+                        // Navigator.of(context).pop();
+                        final XFile? file = await _imagePicker.pickImage(
+                            source: ImageSource.camera);
+                        if (file != null) {
+                          setState(() {
+                            _files.add(File(file.path));
+                          });
+                        }
+                      },
+                      child: Icon(Icons.camera_alt),
+                      shape: CircleBorder(),
+                      mini: true,
+                    ),
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 10.0),
+                    child: FloatingActionButton(
+                      onPressed: () async {
+                        // Navigator.of(context).pop();
+                        final XFile? file = await _imagePicker.pickImage(
+                            source: ImageSource.gallery);
+                        if (file != null) {
+                          setState(() {
+                            _files.add(File(file.path));
+                          });
+                        }
+                      },
+                      child: Icon(Icons.folder),
+                      shape: CircleBorder(),
+                      mini: true,
+                    ),
+                  ),
+                ],
+              ),
               ElevatedButton(
                 onPressed: () async {
+                  var _image = '';
+                  if (_files.isNotEmpty) {
+                    _image = await api<ApiService>(
+                        (service) => service.uploadImage(files: _files),
+                        context: context);
+                    print(_image);
+                  }
                   _ngayTao = DateTime.now().toString();
                   _ngayKetThuc = DateTime.now().toString();
                   _medicalRecord = MedicalRecords(
@@ -159,7 +253,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
                       mota: _moTa,
                       chuandoan: _chuanDoan,
                       dieutri: _dieuTri,
-                      hinhanh1: _hinhAnh1,
+                      hinhanh1: _image,
                       hinhanh2: _hinhAnh2,
                       benhNhan: null,
                       hinhanh: []);
@@ -180,6 +274,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
                               hinhanh: _hinhAnh,
                             ),
                         context: context);
+
                     if (status == 200) {
                       Navigator.push(
                         context,
@@ -198,4 +293,35 @@ class _AddPatientFormState extends State<AddPatientForm> {
       ),
     );
   }
+}
+
+Widget fileRow(File file, VoidCallback onPress) {
+  return Container(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SizedBox(
+          height: 100,
+          width: 100,
+          child: Stack(
+            children: [
+              Image.file(
+                file,
+                fit: BoxFit.cover,
+              ),
+              Positioned(
+                top: -10,
+                right: 15,
+                child: IconButton(
+                  icon: Icon(Icons.close),
+                  color: Colors.red,
+                  onPressed: onPress,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }

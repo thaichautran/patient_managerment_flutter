@@ -1,12 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/models/patient.dart';
 import 'package:flutter_app/app/models/user.dart';
+// import 'package:location/location.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '/config/storage_keys.dart';
 import '/config/decoders.dart';
 import 'package:nylo_framework/nylo_framework.dart';
 import 'package:flutter_app/app/models/rawdata.dart';
-
+import 'package:http/http.dart' as http;
 /* ApiService
 | -------------------------------------------------------------------------
 | Define your API endpoints
@@ -154,6 +157,52 @@ class ApiService extends NyApiService {
       return response.statusCode;
     });
   }
+
+  Future<String?> uploadImage({required List<File> files}) async {
+    return await network(request: (request) async {
+      String userToken = await NyStorage.read<String>("userToken");
+      request.options.headers = {'Authorization': "Bearer " + userToken};
+
+      var formData = FormData();
+
+      for (var file in files) {
+        formData.files.addAll([
+          MapEntry("chunkContent", await MultipartFile.fromFile(file.path)),
+        ]);
+      }
+
+      return request.post(
+        "/_upload/images",
+        data: formData,
+      );
+    }, handleSuccess: (Response response) {
+      return response.data['data'];
+    });
+  }
+
+  // Future<LocationData?> currentLocation() async {
+  //   bool serviceEnabled;
+  //   PermissionStatus permissionGranted;
+
+  //   Location location = new Location();
+
+  //   serviceEnabled = await location.serviceEnabled();
+  //   if (!serviceEnabled) {
+  //     serviceEnabled = await location.requestService();
+  //     if (!serviceEnabled) {
+  //       return null;
+  //     }
+  //   }
+
+  //   permissionGranted = await location.hasPermission();
+  //   if (permissionGranted == PermissionStatus.denied) {
+  //     permissionGranted = await location.requestPermission();
+  //     if (permissionGranted != PermissionStatus.granted) {
+  //       return null;
+  //     }
+  //   }
+  //   return await location.getLocation();
+  // }
   /* Helpers
   |-------------------------------------------------------------------------- */
 
