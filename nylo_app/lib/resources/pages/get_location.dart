@@ -90,6 +90,17 @@ class _GetLocationPageState extends NyState<GetLocationPage> {
                     _selectedCoordinate = position.center!;
                   });
                 },
+                onTap: (point, latlng) async {
+                  setState(() {
+                    _selectedCoordinate = latlng;
+                  });
+                  placemarks = await placemarkFromCoordinates(
+                      _selectedCoordinate!.latitude,
+                      _selectedCoordinate!.longitude);
+                  setState(() {
+                    text = "${placemarks[0].name}, ${placemarks[0].street}";
+                  });
+                },
               ),
               children: [
                 Stack(
@@ -148,6 +159,9 @@ class _GetLocationPageState extends NyState<GetLocationPage> {
             },
             child: Text('Chọn địa điểm này'),
           ),
+          Text(_selectedCoordinate != null
+              ? '${_selectedCoordinate!.latitude}'
+              : ""),
           SizedBox(height: 16),
         ],
       ),
