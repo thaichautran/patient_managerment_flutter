@@ -8,8 +8,9 @@ class DatabaseHelper {
 
   static Future<Database> _getDB() async {
     return openDatabase(join(await getDatabasesPath(), _dbName),
-        onCreate: (db, version) async =>
-            await db.execute('''CREATE TABLE Patient(
+        onCreate: (db, version) async {
+      await db.execute(
+        '''CREATE TABLE Patient(
               id INTEGER PRIMARY KEY,
               hovaten TEXT,
               socon INTEGER,
@@ -21,14 +22,32 @@ class DatabaseHelper {
               ngaytao TEXT,
               ngayketthuc TEXT,
               tuoi INTEGER,
-              medicalRecords JSON DEFAULT('[]'));
-            );'''),
-        version: _version);
+              medicalRecords TEXT
+            );''',
+      );
+    }, onUpgrade: (db, oldVersion, newVersion) async {
+      await db.execute(
+        '''CREATE TABLE Patient(
+              id INTEGER PRIMARY KEY,
+              hovaten TEXT,
+              socon INTEGER,
+              namsinh INTEGER,
+              sohoso TEXT,
+              diachi TEXT,
+              gioitinh TEXT,
+              nghenghiep TEXT,
+              ngaytao TEXT,
+              ngayketthuc TEXT,
+              tuoi INTEGER,
+              medicalRecords TEXT
+            );''',
+      );
+    }, version: _version);
   }
 
   static Future<int> addPatient(Patient patient) async {
     final db = await _getDB();
-    return await db.insert("Patient", patient.toJson(),
+    return await db.insert("Patient", patient.toText(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -37,7 +56,33 @@ class DatabaseHelper {
     final batch = db.batch();
 
     for (var patient in patients) {
-      batch.insert("Patient", patient.toJson(),
+      batch.insert("Patient", patient.toText(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    await batch.commit();
+  }
+
+  static Future<void> updatePatients(List<Patient> patients) async {
+    final db = await _getDB();
+    final batch = db.batch();
+    for (var patient in patients) {
+      batch.update("Patient", patient.toText(),
+          where: 'id = ?',
+          whereArgs: [patient.id],
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    await batch.commit();
+  }
+
+  static Future<void> asyncPatients(List<Patient> patients) async {
+    final db = await _getDB();
+    final batch = db.batch();
+    await db.delete("Patient");
+
+    for (var patient in patients) {
+      batch.insert("Patient", patient.toText(),
           conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
@@ -46,20 +91,24 @@ class DatabaseHelper {
 
   static Future<int> updatePatient(Patient patient) async {
     final db = await _getDB();
-    return await db.update("Patient", patient.toJson(),
+
+    return await db.update("Patient", patient.toText(),
         where: 'id = ?',
         whereArgs: [patient.id],
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  // static Future<int> deletePatient(Patient patient) async {
-  //   final db = await _getDB();
-  //   return await db.delete(
-  //     "Patient",
-  //     where: 'id = ?',
-  //     whereArgs: [patient.id],
-  //   );
-  // }
+  static Future<void> deleteDatabase(String path) =>
+      databaseFactory.deleteDatabase(path);
+
+  static Future<int> deletePatient(Patient patient) async {
+    final db = await _getDB();
+    return await db.delete(
+      "Patient",
+      where: 'id = ?',
+      whereArgs: [patient.id],
+    );
+  }
 
   static Future<List<Patient>?> getAllPatient() async {
     final db = await _getDB();
@@ -70,7 +119,7 @@ class DatabaseHelper {
       return null;
     }
 
-    return List.generate(maps.length, (index) => Patient.fromJson(maps[index]));
+    return List.generate(maps.length, (index) => Patient.fromText(maps[index]));
   }
 
   static Future<Patient?> getPatient(int patientId) async {
@@ -83,6 +132,6 @@ class DatabaseHelper {
       return null;
     }
 
-    return Patient.fromJson(maps.first);
+    return Patient.fromText(maps.first);
   }
 }

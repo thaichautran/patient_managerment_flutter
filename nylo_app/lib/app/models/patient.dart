@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Patient {
   int? id;
   String? hovaten;
@@ -48,6 +50,28 @@ class Patient {
     }
   }
 
+  Patient.fromText(Map<String, dynamic> json) {
+    id = json['id'];
+    hovaten = json['hovaten'];
+    socon = json['socon'];
+    namsinh = json['namsinh'];
+    sohoso = json['sohoso'];
+    diachi = json['diachi'];
+    gioitinh = json['gioitinh'];
+    nghenghiep = json['nghenghiep'];
+    ngaytao = json['ngaytao'];
+    ngayketthuc = json['ngayketthuc'];
+    tuoi = json['tuoi'];
+    if (json['medicalRecords'].isNotEmpty) {
+      medicalRecords = <MedicalRecords>[];
+      jsonDecode(json['medicalRecords']).forEach((v) {
+        medicalRecords!.add(new MedicalRecords.fromJson(v));
+      });
+    } else {
+      medicalRecords = [];
+    }
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
@@ -61,7 +85,33 @@ class Patient {
     data['ngaytao'] = this.ngaytao;
     data['ngayketthuc'] = this.ngayketthuc;
     data['tuoi'] = this.tuoi;
-    (data['medicalRecords'] ?? []) as List;
+    if (this.medicalRecords != null) {
+      data['medicalRecords'] =
+          this.medicalRecords!.map((v) => v.toJson()).toList();
+    } else {
+      data['medicalRecords'] = [];
+    }
+    return data;
+  }
+
+  Map<String, dynamic> toText() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['id'] = this.id;
+    data['hovaten'] = this.hovaten;
+    data['socon'] = this.socon;
+    data['namsinh'] = this.namsinh;
+    data['sohoso'] = this.sohoso;
+    data['diachi'] = this.diachi;
+    data['gioitinh'] = this.gioitinh;
+    data['nghenghiep'] = this.nghenghiep;
+    data['ngaytao'] = this.ngaytao;
+    data['ngayketthuc'] = this.ngayketthuc;
+    data['tuoi'] = this.tuoi;
+    if (this.medicalRecords != null) {
+      data['medicalRecords'] = jsonEncode(this.medicalRecords);
+    } else {
+      data['medicalRecords'] = "";
+    }
     return data;
   }
 }
@@ -164,4 +214,32 @@ class MedicalRecords {
     }
     return data;
   }
+
+  // String toText() {
+  //   final Map<String, dynamic> data = new Map<String, dynamic>();
+  //   data['id'] = this.id;
+  //   data['benhnhan_id'] = this.benhnhanId;
+  //   data['cannang'] = this.cannang;
+  //   data['chieucao'] = this.chieucao;
+  //   data['tiensu'] = this.tiensu;
+  //   data['lamsang'] = this.lamsang;
+  //   data['mach'] = this.mach;
+  //   data['nhietdo'] = this.nhietdo;
+  //   data['huyetapcao'] = this.huyetapcao;
+  //   data['huyetapthap'] = this.huyetapthap;
+  //   data['tebao'] = this.tebao;
+  //   data['mauchay'] = this.mauchay;
+  //   data['mota'] = this.mota;
+  //   data['chuandoan'] = this.chuandoan;
+  //   data['dieutri'] = this.dieutri;
+  //   data['hinhanh1'] = this.hinhanh1;
+  //   data['hinhanh2'] = this.hinhanh2;
+  //   data['benhNhan'] = this.benhNhan;
+  //   if (this.hinhanh != null) {
+  //     data['hinhanh'] = this.hinhanh!.map((v) => v).toList();
+  //   } else {
+  //     data['hinhanh'] = [];
+  //   }
+  //   return data as String;
+  // }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_app/app/networking/api_service.dart';
 import 'package:flutter_app/resources/pages/list_patient.dart';
 import 'package:flutter_app/resources/pages/login_page.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:nylo_framework/nylo_framework.dart';
 import 'package:nylo_framework/theme/helper/ny_theme.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,26 @@ class _HomePageState extends NyState<HomePage> {
   ApiService _apiService = ApiService();
   @override
   init() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
     String? userToken = await NyStorage.read<String>("userToken");
     if (userToken == null) {
       Navigator.push(context,
@@ -52,13 +73,40 @@ class _HomePageState extends NyState<HomePage> {
       if (status == 200) {
         Navigator.push(context,
             new MaterialPageRoute(builder: (context) => new ListPatientPage()));
+      } else if (status == 401) {
+        Navigator.push(context,
+            new MaterialPageRoute(builder: (context) => new LoginPage()));
       } else {
-        // Navigator.push(context,
-        //     new MaterialPageRoute(builder: (context) => new LoginPage()));
         Navigator.push(context,
             new MaterialPageRoute(builder: (context) => new ListPatientPage()));
       }
     }
+  }
+
+  Future<Position> determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
   }
 
   @override

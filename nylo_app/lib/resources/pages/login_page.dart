@@ -5,10 +5,14 @@ import 'package:flutter_app/config/storage_keys.dart';
 import 'package:flutter_app/resources/pages/list_patient.dart';
 import 'package:nylo_framework/nylo_framework.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends NyState<LoginPage> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,10 +58,13 @@ class LoginPage extends StatelessWidget {
                 if (token != null) {
                   await NyStorage.store('userToken', token);
                   Backpack.instance.set('userToken', token);
+                  showToastSuccess(description: 'Đăng nhập thành công!');
                   Navigator.push(
                       context,
                       new MaterialPageRoute(
                           builder: (context) => new ListPatientPage()));
+                } else {
+                  showToastOops(description: 'Đăng nhập thất bại!');
                 }
               },
               child: Text('Đăng nhập'),

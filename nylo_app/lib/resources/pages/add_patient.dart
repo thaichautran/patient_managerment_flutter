@@ -17,8 +17,23 @@ class AddPatientForm extends StatefulWidget {
   _AddPatientFormState createState() => _AddPatientFormState();
 }
 
-class _AddPatientFormState extends State<AddPatientForm> {
+class _AddPatientFormState extends NyState<AddPatientForm> {
   final _formKey = GlobalKey<FormState>();
+
+  displayToast(bool status) {
+    showToast(
+        title: status ? "Thành công!" : "Thất bại!",
+        description: status
+            ? "Thêm bệnh nhân thành công"
+            : "Đã xảy ra lỗi khi thêm bệnh nhân",
+        icon: Icons.account_circle,
+        duration: Duration(seconds: 2),
+        style: status
+            ? ToastNotificationStyleType.SUCCESS
+            : ToastNotificationStyleType
+                .DANGER // SUCCESS, INFO, DANGER, WARNING
+        );
+  }
 
   String _hoVaTen = '';
   int _soCon = 0;
@@ -32,17 +47,17 @@ class _AddPatientFormState extends State<AddPatientForm> {
 
   String _canNang = '68';
   String _chieuCao = '168';
-  String _tienSu = '';
-  String _lamSang = '';
-  String _mach = '';
-  String _nhietDo = '';
-  String _huyetApCao = '';
-  String _huyetApThap = '';
-  String _teBao = '';
-  int _mauChay = 0;
-  String _moTa = 'ddau dau';
-  String _chuanDoan = '';
-  String _dieuTri = '';
+  String _tienSu = 'Không bị bệnh gì cả';
+  String _lamSang = 'Không biết';
+  String _mach = '80';
+  String _nhietDo = '37';
+  String _huyetApCao = '140';
+  String _huyetApThap = '112';
+  String _teBao = 'Không biết';
+  int _mauChay = 12;
+  String _moTa = 'Hay bị viêm họng mỗi khi trời lạnh';
+  String _chuanDoan = 'Viêm họng cấp';
+  String _dieuTri = 'Uống thuốc kháng sinh và giữ ấm cơ thể';
   String _hinhAnh1 = '';
   String _hinhAnh2 = '';
 
@@ -210,7 +225,6 @@ class _AddPatientFormState extends State<AddPatientForm> {
                     margin: EdgeInsets.only(top: 10.0),
                     child: FloatingActionButton(
                       onPressed: () async {
-                        // Navigator.of(context).pop();
                         final XFile? file = await _imagePicker.pickImage(
                             source: ImageSource.gallery);
                         if (file != null) {
@@ -276,12 +290,15 @@ class _AddPatientFormState extends State<AddPatientForm> {
                         context: context);
 
                     if (status == 200) {
+                      displayToast(true);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ListPatientPage(),
                         ),
                       );
+                    } else {
+                      displayToast(false);
                     }
                   }
                 },

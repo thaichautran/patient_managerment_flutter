@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/app/networking/api_service.dart';
 import 'package:flutter_app/resources/pages/add_patient.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
@@ -14,19 +13,31 @@ class GetLocationPage extends StatefulWidget {
 }
 
 class _GetLocationPageState extends NyState<GetLocationPage> {
-  LatLng? _selectedCoordinate;
-  ApiService _apiService = ApiService();
   Position? _position;
+  LatLng? _selectedCoordinate;
   late List<Placemark> placemarks = [];
   MapController? mapController;
-  String text = "Đang chọn vị trí...";
+  String text = "";
+
   @override
   init() async {
-    Position position = await _determinePosition();
-    setState(() {
-      _position = position;
-    });
     mapController = MapController();
+    Geolocator.getCurrentPosition().then((value) async {
+      _position = value;
+
+      print(_position);
+      if (_position != null) {
+        placemarks = await placemarkFromCoordinates(
+            _position!.latitude, _position!.longitude);
+
+        text = "${placemarks[0].street}";
+        mapController?.move(
+          LatLng(_position!.latitude, _position!.longitude),
+          15,
+        );
+      }
+    });
+
     mapController?.mapEventStream.listen((event) async {
       var eventType = event.runtimeType;
       if (eventType == MapEventMoveStart) {
@@ -37,36 +48,15 @@ class _GetLocationPageState extends NyState<GetLocationPage> {
         placemarks = await placemarkFromCoordinates(
             _selectedCoordinate!.latitude, _selectedCoordinate!.longitude);
         setState(() {
-          text = "${placemarks[0].name}, ${placemarks[0].street}";
+          text = "${placemarks[0].street}";
         });
       }
     });
   }
 
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -98,7 +88,7 @@ class _GetLocationPageState extends NyState<GetLocationPage> {
                       _selectedCoordinate!.latitude,
                       _selectedCoordinate!.longitude);
                   setState(() {
-                    text = "${placemarks[0].name}, ${placemarks[0].street}";
+                    text = "${placemarks[0].street}";
                   });
                 },
               ),
@@ -140,7 +130,7 @@ class _GetLocationPageState extends NyState<GetLocationPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                _selectedCoordinate != null ? text : "Đang tìm vị trí...",
+                _selectedCoordinate != null ? text : "",
                 style: TextStyle(fontSize: 16),
               ),
             ],
@@ -151,17 +141,13 @@ class _GetLocationPageState extends NyState<GetLocationPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AddPatientForm(
-                      address:
-                          '${placemarks[0].name}, ${placemarks[0].street}'),
+                  builder: (context) =>
+                      AddPatientForm(address: '${placemarks[0].street}'),
                 ),
               );
             },
             child: Text('Chọn địa điểm này'),
           ),
-          Text(_selectedCoordinate != null
-              ? '${_selectedCoordinate!.latitude}'
-              : ""),
           SizedBox(height: 16),
         ],
       ),

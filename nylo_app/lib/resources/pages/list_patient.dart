@@ -27,13 +27,34 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
     List<Patient>? patients =
         await _apiService.fetchPatient(nowAsString, 1, 50);
     if (patients != null) {
+      List<Patient>? patientsOffline = await DatabaseHelper.getAllPatient();
       setState(() {
         _listPatient = patients;
-        DatabaseHelper.addPatients(_listPatient!);
+        if (patientsOffline != null) {
+          DatabaseHelper.updatePatients(_listPatient!);
+        } else {
+          DatabaseHelper.addPatients(_listPatient!);
+        }
       });
     } else {
       _listPatient = await DatabaseHelper.getAllPatient();
     }
+  }
+
+  @override
+  Widget loading(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("Loading..."),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -43,6 +64,13 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
         title: Text('Danh sách bệnh nhân'),
         actions: [
           IconButton(
+            icon: Icon(Icons.cloud_sync),
+            onPressed: () async {
+              DatabaseHelper.asyncPatients(_listPatient!);
+              showToastSuccess(description: "Đồng bộ thành công!");
+            },
+          ),
+          IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
               final status = await api<ApiService>(
@@ -50,12 +78,15 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
                   context: context);
               if (status == 200) {
                 Auth.logout();
+                showToastSuccess(description: 'Đăng xuất thành công!');
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) {
                     return LoginPage();
                   }),
                 );
+              } else {
+                showToastOops(description: 'Đăng xuất thất bại!');
               }
             },
           ),
@@ -63,7 +94,7 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
       ),
       body: _listPatient!.isEmpty
           ? Center(
-              child: Text("Không có bệnh nhân nào!"),
+              child: Text("Không có bệnh nhân nào"),
             )
           : ListView.builder(
               itemCount: _listPatient?.length,
@@ -71,7 +102,43 @@ class _ListPatientPageState extends NyState<ListPatientPage> {
                 final patient = _listPatient![index];
                 return ListTile(
                   title: Text(patient.hovaten ?? ""),
-                  subtitle: Text(patient.namsinh.toString()),
+                  subtitle: Container(
+                    child: Row(
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 181, 181, 186),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1,
+                                ),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 5), // Add padding here
+                              child: Text(
+                                'ID: ${patient.id}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '| ${patient.tuoi.toString()} tuổi, ${patient.gioitinh}, ${patient.diachi}',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,
